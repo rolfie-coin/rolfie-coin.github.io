@@ -7,7 +7,7 @@ import { toChecksumAddress } from 'ethereumjs-util'
 import { rolfieBytecode, rolfieAbi } from './constants2.json'
 
 let ethersProvider
-const contractAddress = "0x877f6Fb754fc48d388D389c9fBC8fd9E6134e2d3"
+const contractAddress = "0xB458053535160b50783100cBda9450EdBfE62307"
 // let hstFactory
 // let piggybankFactory
 let rolfieFactory
@@ -32,7 +32,7 @@ const getAccountsResults = document.getElementById('getAccountsResult')
 const mintButton = document.getElementById('mint')
 const redeemButton = document.getElementById('redeem')
 const retireButton = document.getElementById('retire')
-const statusDisplay = document.getElementById('statusDisplay')
+const pledgeDisplay = document.getElementById('pledgeDisplay')
 const myAccount = document.getElementById('myAccount')
 const myBalance = document.getElementById('myBalance')
 const mintableAmout = document.getElementById('mintableAmount')
@@ -158,6 +158,9 @@ const initialize = async () => {
     // signTypedDataV4Verify,
   ]
 
+  accounts = await ethereum.request({
+    method: 'eth_requestAccounts',
+  })
   const isMetaMaskConnected = () => accounts && accounts.length > 0
 
   const onClickInstall = () => {
@@ -201,8 +204,10 @@ const initialize = async () => {
     let lastMinted = await rolfie.lastMinted()
     let totalSupplyValue = await rolfie.totalSupply() / 100
     let depositValue = await rolfie.deposited() / 10e18
+    let pledge = await rolfie.pledge()
 
     var currentDate = new Date()
+    var retireDate = new Date(2056-11-28)
 
     console.info(currentDate.getTime())
     console.info(lastMinted.toNumber())
@@ -210,7 +215,8 @@ const initialize = async () => {
     mintableAmout.innerText = Math.floor((currentDate.getTime() / 1000 - lastMinted.toNumber())/(365*24*3600))
     totalSupply.innerText = totalSupplyValue
     deposited.innerText = depositValue
-    tillRetirement.innerText = 65 - totalSupplyValue
+    tillRetirement.innerText = (2046 - currentDate.getFullYear())
+    pledgeDisplay.innerText = pledge
   }
 
   const updateButtons = async() => {
@@ -224,30 +230,27 @@ const initialize = async () => {
       }
       clearTextDisplays()
       
+      
+
+    } else {
+
+      
+
+    }
+
+    if (isMetaMaskConnected()) {
       let isRetired = await rolfie.isRetired();
       if (isRetired) {
         retireButton.disabled = true
         retireButton.innerText = "Already Retired"
       } else {
         redeemButton.disabled = true
-        redeemButton.innerText = "First you have to Retire"
+        redeemButton.innerText = "Redeem (First you have to Retire)"
       }
-      
-      
-      
-
     } else {
-      // deployButton.disabled = false
-      // sendButton.disabled = false
-      // createToken.disabled = false
-      // personalSign.disabled = false
-      // signTypedData.disabled = false
-      // getEncryptionKeyButton.disabled = false
-      // ethSign.disabled = false
-      // personalSign.disabled = false
-      // signTypedData.disabled = false
-      // signTypedDataV3.disabled = false
-      // signTypedDataV4.disabled = false
+      redeemButton.disabled = true
+      retireButton.disabled = true
+      mintButton.disabled = true
     }
 
     if (!isMetaMaskInstalled()) {
@@ -513,7 +516,7 @@ const initialize = async () => {
         
 
       } catch (error) {
-        statusDisplay.innerText = `Error: ${error.message}`
+        console.error(`Error: ${error.message}`)
       }
 
       redeemButton.innerText = "Redeem"
@@ -531,10 +534,27 @@ const initialize = async () => {
         let r = await rolfie.retire();
 
       } catch (error) {
-        statusDisplay.innerText = `Error: ${error.message}`
+        console.error(`Error: ${error.message}`)
       }
       retireButton.innerText = "Retire"
       retireButton.disabled = false
+    }
+
+    mintButton.onclick = async () => {
+      try {
+
+        mintButton.disabled = true
+        mintButton.innerText = "Minting..."
+
+        let rolfie = new ethers.Contract(contractAddress, rolfieAbi, ethersProvider.getSigner())
+        let r = await rolfie.birthdayMint();
+        console.info("minted")
+
+      } catch (error) {
+        console.error(`Error: ${error.message}`)
+      }
+      mintButton.innerText = "Mint"
+      mintButton.disabled = false
     }
   }
 
