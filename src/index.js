@@ -7,7 +7,7 @@ import { toChecksumAddress } from 'ethereumjs-util'
 import { rolfieBytecode, rolfieAbi } from './constants2.json'
 
 let ethersProvider
-const contractAddress = "0xB458053535160b50783100cBda9450EdBfE62307"
+const contractAddress = "0xb6a7055F42CD0f355E11B8cddCB2bc127Ac71a19"
 // let hstFactory
 // let piggybankFactory
 let rolfieFactory
