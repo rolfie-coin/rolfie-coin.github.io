@@ -159,9 +159,14 @@ const initialize = async () => {
     // signTypedDataV4Verify,
   ]
 
-  accounts = await ethereum.request({
-    method: 'eth_requestAccounts',
-  })
+  try {
+    accounts = await ethereum.request({
+      method: 'eth_requestAccounts',
+    })
+  } catch (error) {
+    console.error(error)
+  }
+  
   const isMetaMaskConnected = () => accounts && accounts.length > 0
 
   const onClickInstall = () => {
