@@ -7,7 +7,7 @@ import { toChecksumAddress } from 'ethereumjs-util'
 import { rolfieBytecode, rolfieAbi } from './constants2.json'
 
 let ethersProvider
-const contractAddress = "0xb6a7055F42CD0f355E11B8cddCB2bc127Ac71a19"
+const contractAddress = "0x4e64C7dee309b5017ff3ff97509A9cBd17a405Bd"
 // let hstFactory
 // let piggybankFactory
 let rolfieFactory
@@ -209,7 +209,7 @@ const initialize = async () => {
 
     let lastMinted = await rolfie.lastMinted()
     let totalSupplyValue = await rolfie.totalSupply() / 100
-    let depositValue = await rolfie.deposited() / 10e18
+    let depositValue = await rolfie.deposited() / 1e18
     let pledge = await rolfie.pledge()
 
     var currentDate = new Date()
