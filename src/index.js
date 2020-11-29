@@ -3,11 +3,14 @@ import MetaMaskOnboarding from '@metamask/onboarding'
 import { encrypt, recoverPersonalSignature, recoverTypedSignatureLegacy, recoverTypedSignature, recoverTypedSignature_v4 } from 'eth-sig-util'
 import { ethers } from 'ethers'
 import { toChecksumAddress } from 'ethereumjs-util'
-import { hstBytecode, hstAbi, piggybankBytecode, piggybankAbi } from './constants.json'
+// import { hstBytecode, hstAbi, piggybankBytecode, piggybankAbi } from './constants2.json'
+import { rolfieBytecode, rolfieAbi } from './constants2.json'
 
 let ethersProvider
-let hstFactory
-let piggybankFactory
+const contractAddress = "0x877f6Fb754fc48d388D389c9fBC8fd9E6134e2d3"
+// let hstFactory
+// let piggybankFactory
+let rolfieFactory
 
 const currentUrl = new URL(window.location.href)
 const forwarderOrigin = currentUrl.hostname === 'localhost'
@@ -26,72 +29,96 @@ const onboardButton = document.getElementById('connectButton')
 const getAccountsButton = document.getElementById('getAccounts')
 const getAccountsResults = document.getElementById('getAccountsResult')
 
+const mintButton = document.getElementById('mint')
+const redeemButton = document.getElementById('redeem')
+const retireButton = document.getElementById('retire')
+const statusDisplay = document.getElementById('statusDisplay')
+const myAccount = document.getElementById('myAccount')
+const myBalance = document.getElementById('myBalance')
+const mintableAmout = document.getElementById('mintableAmount')
+const totalSupply = document.getElementById('totalSupply')
+const deposited = document.getElementById('deposited')
+const tillRetirement = document.getElementById('tillRetirement') 
+
 // Permissions Actions Section
 const requestPermissionsButton = document.getElementById('requestPermissions')
 const getPermissionsButton = document.getElementById('getPermissions')
 const permissionsResult = document.getElementById('permissionsResult')
 
 // Contract Section
-const deployButton = document.getElementById('deployButton')
-const depositButton = document.getElementById('depositButton')
-const withdrawButton = document.getElementById('withdrawButton')
-const contractStatus = document.getElementById('contractStatus')
+// const deployButton = document.getElementById('deployButton')
+// const depositButton = document.getElementById('depositButton')
+// const withdrawButton = document.getElementById('withdrawButton')
+// const contractStatus = document.getElementById('contractStatus')
 
 // Send Eth Section
-const sendButton = document.getElementById('sendButton')
+// const sendButton = document.getElementById('sendButton')
 
 // Send Tokens Section
-const tokenAddress = document.getElementById('tokenAddress')
-const createToken = document.getElementById('createToken')
-const transferTokens = document.getElementById('transferTokens')
-const approveTokens = document.getElementById('approveTokens')
-const transferTokensWithoutGas = document.getElementById('transferTokensWithoutGas')
-const approveTokensWithoutGas = document.getElementById('approveTokensWithoutGas')
+// const tokenAddress = document.getElementById('tokenAddress')
+// const createToken = document.getElementById('createToken')
+// const transferTokens = document.getElementById('transferTokens')
+// const approveTokens = document.getElementById('approveTokens')
+// const transferTokensWithoutGas = document.getElementById('transferTokensWithoutGas')
+// const approveTokensWithoutGas = document.getElementById('approveTokensWithoutGas')
 
-// Encrypt / Decrypt Section
-const getEncryptionKeyButton = document.getElementById('getEncryptionKeyButton')
-const encryptMessageInput = document.getElementById('encryptMessageInput')
-const encryptButton = document.getElementById('encryptButton')
-const decryptButton = document.getElementById('decryptButton')
-const encryptionKeyDisplay = document.getElementById('encryptionKeyDisplay')
-const ciphertextDisplay = document.getElementById('ciphertextDisplay')
-const cleartextDisplay = document.getElementById('cleartextDisplay')
+// // Encrypt / Decrypt Section
+// const getEncryptionKeyButton = document.getElementById('getEncryptionKeyButton')
+// const encryptMessageInput = document.getElementById('encryptMessageInput')
+// const encryptButton = document.getElementById('encryptButton')
+// const decryptButton = document.getElementById('decryptButton')
+// const encryptionKeyDisplay = document.getElementById('encryptionKeyDisplay')
+// const ciphertextDisplay = document.getElementById('ciphertextDisplay')
+// const cleartextDisplay = document.getElementById('cleartextDisplay')
 
-// Ethereum Signature Section
-const ethSign = document.getElementById('ethSign')
-const ethSignResult = document.getElementById('ethSignResult')
-const personalSign = document.getElementById('personalSign')
-const personalSignResult = document.getElementById('personalSignResult')
-const personalSignVerify = document.getElementById('personalSignVerify')
-const personalSignVerifySigUtilResult = document.getElementById('personalSignVerifySigUtilResult')
-const personalSignVerifyECRecoverResult = document.getElementById('personalSignVerifyECRecoverResult')
-const signTypedData = document.getElementById('signTypedData')
-const signTypedDataResult = document.getElementById('signTypedDataResult')
-const signTypedDataVerify = document.getElementById('signTypedDataVerify')
-const signTypedDataVerifyResult = document.getElementById('signTypedDataVerifyResult')
-const signTypedDataV3 = document.getElementById('signTypedDataV3')
-const signTypedDataV3Result = document.getElementById('signTypedDataV3Result')
-const signTypedDataV3Verify = document.getElementById('signTypedDataV3Verify')
-const signTypedDataV3VerifyResult = document.getElementById('signTypedDataV3VerifyResult')
-const signTypedDataV4 = document.getElementById('signTypedDataV4')
-const signTypedDataV4Result = document.getElementById('signTypedDataV4Result')
-const signTypedDataV4Verify = document.getElementById('signTypedDataV4Verify')
-const signTypedDataV4VerifyResult = document.getElementById('signTypedDataV4VerifyResult')
+// // Ethereum Signature Section
+// const ethSign = document.getElementById('ethSign')
+// const ethSignResult = document.getElementById('ethSignResult')
+// const personalSign = document.getElementById('personalSign')
+// const personalSignResult = document.getElementById('personalSignResult')
+// const personalSignVerify = document.getElementById('personalSignVerify')
+// const personalSignVerifySigUtilResult = document.getElementById('personalSignVerifySigUtilResult')
+// const personalSignVerifyECRecoverResult = document.getElementById('personalSignVerifyECRecoverResult')
+// const signTypedData = document.getElementById('signTypedData')
+// const signTypedDataResult = document.getElementById('signTypedDataResult')
+// const signTypedDataVerify = document.getElementById('signTypedDataVerify')
+// const signTypedDataVerifyResult = document.getElementById('signTypedDataVerifyResult')
+// const signTypedDataV3 = document.getElementById('signTypedDataV3')
+// const signTypedDataV3Result = document.getElementById('signTypedDataV3Result')
+// const signTypedDataV3Verify = document.getElementById('signTypedDataV3Verify')
+// const signTypedDataV3VerifyResult = document.getElementById('signTypedDataV3VerifyResult')
+// const signTypedDataV4 = document.getElementById('signTypedDataV4')
+// const signTypedDataV4Result = document.getElementById('signTypedDataV4Result')
+// const signTypedDataV4Verify = document.getElementById('signTypedDataV4Verify')
+// const signTypedDataV4VerifyResult = document.getElementById('signTypedDataV4VerifyResult')
 
 const initialize = async () => {
   try {
     // We must specify the network as 'any' for ethers to allow network changes
     ethersProvider = new ethers.providers.Web3Provider(window.ethereum, 'any')
-    hstFactory = new ethers.ContractFactory(
-      hstAbi,
-      hstBytecode,
-      ethersProvider.getSigner(),
-    )
-    piggybankFactory = new ethers.ContractFactory(
-      piggybankAbi,
-      piggybankBytecode,
-      ethersProvider.getSigner(),
-    )
+    // hstFactory = new ethers.ContractFactory(
+    //   hstAbi,
+    //   hstBytecode,
+    //   ethersProvider.getSigner(),
+    // )
+    // piggybankFactory = new ethers.ContractFactory(
+    //   piggybankAbi,
+    //   piggybankBytecode,
+    //   ethersProvider.getSigner(),
+    // )
+    
+    // rolfieFactory = new ethers.ContractFactory(
+    //   rolfieAbi,
+    //   rolfieBytecode,
+    //   ethersProvider.getSigner(),
+    // )
+    // let rolfie = new ethers.Contract(contractAddress, rolfieAbi, ethersProvider)
+
+    // let sp = await rolfie.totalSupply()
+    // let symbol = await rolfie.symbol()
+    // console.info(sp.toNumber())
+    // console.info(symbol)
+
   } catch (error) {
     console.error(error)
   }
@@ -107,28 +134,28 @@ const initialize = async () => {
   let accountButtonsInitialized = false
 
   const accountButtons = [
-    deployButton,
-    depositButton,
-    withdrawButton,
-    sendButton,
-    createToken,
-    transferTokens,
-    approveTokens,
-    transferTokensWithoutGas,
-    approveTokensWithoutGas,
-    getEncryptionKeyButton,
-    encryptMessageInput,
-    encryptButton,
-    decryptButton,
-    ethSign,
-    personalSign,
-    personalSignVerify,
-    signTypedData,
-    signTypedDataVerify,
-    signTypedDataV3,
-    signTypedDataV3Verify,
-    signTypedDataV4,
-    signTypedDataV4Verify,
+    // deployButton,
+    // depositButton,
+    // withdrawButton,
+    // sendButton,
+    // createToken,
+    // transferTokens,
+    // approveTokens,
+    // transferTokensWithoutGas,
+    // approveTokensWithoutGas,
+    // getEncryptionKeyButton,
+    // encryptMessageInput,
+    // encryptButton,
+    // decryptButton,
+    // ethSign,
+    // personalSign,
+    // personalSignVerify,
+    // signTypedData,
+    // signTypedDataVerify,
+    // signTypedDataV3,
+    // signTypedDataV3Verify,
+    // signTypedDataV4,
+    // signTypedDataV4Verify,
   ]
 
   const isMetaMaskConnected = () => accounts && accounts.length > 0
@@ -151,31 +178,76 @@ const initialize = async () => {
   }
 
   const clearTextDisplays = () => {
-    encryptionKeyDisplay.innerText = ''
-    encryptMessageInput.value = ''
-    ciphertextDisplay.innerText = ''
-    cleartextDisplay.innerText = ''
+    // encryptionKeyDisplay.innerText = ''
+    // encryptMessageInput.value = ''
+    // ciphertextDisplay.innerText = ''
+    // cleartextDisplay.innerText = ''
   }
 
-  const updateButtons = () => {
+  const updateTable = async() => {
+
+    let rolfie = new ethers.Contract(contractAddress, rolfieAbi, ethersProvider)
+    
+    const accounts = await ethereum.request({
+      method: 'eth_accounts',
+    })
+    if (accounts.length > 0) {
+      let myacc = accounts[0]
+      myAccount.innerText = myacc.substr(myacc.length - 5)
+      let myb = await rolfie.balanceOf(myacc)
+      myBalance.innerText = myb.toNumber() / 100
+    }
+
+    let lastMinted = await rolfie.lastMinted()
+    let totalSupplyValue = await rolfie.totalSupply() / 100
+    let depositValue = await rolfie.deposited() / 10e18
+
+    var currentDate = new Date()
+
+    console.info(currentDate.getTime())
+    console.info(lastMinted.toNumber())
+
+    mintableAmout.innerText = Math.floor((currentDate.getTime() / 1000 - lastMinted.toNumber())/(365*24*3600))
+    totalSupply.innerText = totalSupplyValue
+    deposited.innerText = depositValue
+    tillRetirement.innerText = 65 - totalSupplyValue
+  }
+
+  const updateButtons = async() => {
+
     const accountButtonsDisabled = !isMetaMaskInstalled() || !isMetaMaskConnected()
+    updateTable()
+    let rolfie = new ethers.Contract(contractAddress, rolfieAbi, ethersProvider)
     if (accountButtonsDisabled) {
       for (const button of accountButtons) {
         button.disabled = true
       }
       clearTextDisplays()
+      
+      let isRetired = await rolfie.isRetired();
+      if (isRetired) {
+        retireButton.disabled = true
+        retireButton.innerText = "Already Retired"
+      } else {
+        redeemButton.disabled = true
+        redeemButton.innerText = "First you have to Retire"
+      }
+      
+      
+      
+
     } else {
-      deployButton.disabled = false
-      sendButton.disabled = false
-      createToken.disabled = false
-      personalSign.disabled = false
-      signTypedData.disabled = false
-      getEncryptionKeyButton.disabled = false
-      ethSign.disabled = false
-      personalSign.disabled = false
-      signTypedData.disabled = false
-      signTypedDataV3.disabled = false
-      signTypedDataV4.disabled = false
+      // deployButton.disabled = false
+      // sendButton.disabled = false
+      // createToken.disabled = false
+      // personalSign.disabled = false
+      // signTypedData.disabled = false
+      // getEncryptionKeyButton.disabled = false
+      // ethSign.disabled = false
+      // personalSign.disabled = false
+      // signTypedData.disabled = false
+      // signTypedDataV3.disabled = false
+      // signTypedDataV4.disabled = false
     }
 
     if (!isMetaMaskInstalled()) {
@@ -206,627 +278,663 @@ const initialize = async () => {
      * Contract Interactions
      */
 
-    deployButton.onclick = async () => {
-      let contract
-      contractStatus.innerHTML = 'Deploying'
+    // deployButton.onclick = async () => {
+    //   let contract
+    //   contractStatus.innerHTML = 'Deploying'
 
-      try {
-        contract = await piggybankFactory.deploy()
-        await contract.deployTransaction.wait()
-      } catch (error) {
-        contractStatus.innerHTML = 'Deployment Failed'
-        throw error
-      }
+    //   try {
+    //     contract = await piggybankFactory.deploy()
+    //     await contract.deployTransaction.wait()
+    //   } catch (error) {
+    //     contractStatus.innerHTML = 'Deployment Failed'
+    //     throw error
+    //   }
 
-      if (contract.address === undefined) {
-        return
-      }
+    //   if (contract.address === undefined) {
+    //     return
+    //   }
 
-      console.log(`Contract mined! address: ${contract.address} transactionHash: ${contract.transactionHash}`)
-      contractStatus.innerHTML = 'Deployed'
-      depositButton.disabled = false
-      withdrawButton.disabled = false
+    //   console.log(`Contract mined! address: ${contract.address} transactionHash: ${contract.transactionHash}`)
+    //   contractStatus.innerHTML = 'Deployed'
+    //   depositButton.disabled = false
+    //   withdrawButton.disabled = false
 
-      depositButton.onclick = async () => {
-        contractStatus.innerHTML = 'Deposit initiated'
-        const result = await contract.deposit({
-          from: accounts[0],
-          value: '0x3782dace9d900000',
-        })
-        console.log(result)
-        contractStatus.innerHTML = 'Deposit completed'
-      }
+    //   depositButton.onclick = async () => {
+    //     contractStatus.innerHTML = 'Deposit initiated'
+    //     const result = await contract.deposit({
+    //       from: accounts[0],
+    //       value: '0x3782dace9d900000',
+    //     })
+    //     console.log(result)
+    //     contractStatus.innerHTML = 'Deposit completed'
+    //   }
 
-      withdrawButton.onclick = async () => {
-        const result = await contract.withdraw(
-          '0xde0b6b3a7640000',
-          { from: accounts[0] },
-        )
-        console.log(result)
-        contractStatus.innerHTML = 'Withdrawn'
-      }
+    //   withdrawButton.onclick = async () => {
+    //     const result = await contract.withdraw(
+    //       '0xde0b6b3a7640000',
+    //       { from: accounts[0] },
+    //     )
+    //     console.log(result)
+    //     contractStatus.innerHTML = 'Withdrawn'
+    //   }
 
-      console.log(contract)
-    }
+    //   console.log(contract)
+    // }
 
     /**
      * Sending ETH
      */
 
-    sendButton.onclick = async () => {
-      const result = await ethersProvider.getSigner().sendTransaction({
-        to: '0x2f318C334780961FB129D2a6c30D0763d9a5C970',
-        value: '0x29a2241af62c0000',
-        gasLimit: 21000,
-        gasPrice: 20000000000,
-      })
-      console.log(result)
-    }
+    // sendButton.onclick = async () => {
+    //   const result = await ethersProvider.getSigner().sendTransaction({
+    //     to: '0x2f318C334780961FB129D2a6c30D0763d9a5C970',
+    //     value: '0x29a2241af62c0000',
+    //     gasLimit: 21000,
+    //     gasPrice: 20000000000,
+    //   })
+    //   console.log(result)
+    // }
 
     /**
      * ERC20 Token
      */
 
-    createToken.onclick = async () => {
-      const _initialAmount = 100
-      const _tokenName = 'TST'
-      const _decimalUnits = 0
-      const _tokenSymbol = 'TST'
+    // createToken.onclick = async () => {
+    //   const _initialAmount = 100
+    //   const _tokenName = 'TST'
+    //   const _decimalUnits = 0
+    //   const _tokenSymbol = 'TST'
 
-      try {
-        const contract = await hstFactory.deploy(
-          _initialAmount,
-          _tokenName,
-          _decimalUnits,
-          _tokenSymbol,
-        )
-        await contract.deployTransaction.wait()
-        if (contract.address === undefined) {
-          return undefined
-        }
+    //   try {
+    //     const contract = await hstFactory.deploy(
+    //       _initialAmount,
+    //       _tokenName,
+    //       _decimalUnits,
+    //       _tokenSymbol,
+    //     )
+    //     await contract.deployTransaction.wait()
+    //     if (contract.address === undefined) {
+    //       return undefined
+    //     }
 
-        console.log(`Contract mined! address: ${contract.address} transactionHash: ${contract.transactionHash}`)
-        tokenAddress.innerHTML = contract.address
-        transferTokens.disabled = false
-        approveTokens.disabled = false
-        transferTokensWithoutGas.disabled = false
-        approveTokensWithoutGas.disabled = false
+    //     console.log(`Contract mined! address: ${contract.address} transactionHash: ${contract.transactionHash}`)
+    //     tokenAddress.innerHTML = contract.address
+    //     transferTokens.disabled = false
+    //     approveTokens.disabled = false
+    //     transferTokensWithoutGas.disabled = false
+    //     approveTokensWithoutGas.disabled = false
 
-        transferTokens.onclick = async () => {
-          const result = await contract.transfer('0x2f318C334780961FB129D2a6c30D0763d9a5C970', '15000', {
-            from: accounts[0],
-            gasLimit: 60000,
-            gasPrice: '20000000000',
-          })
-          console.log('result', result)
-        }
+    //     transferTokens.onclick = async () => {
+    //       const result = await contract.transfer('0x2f318C334780961FB129D2a6c30D0763d9a5C970', '15000', {
+    //         from: accounts[0],
+    //         gasLimit: 60000,
+    //         gasPrice: '20000000000',
+    //       })
+    //       console.log('result', result)
+    //     }
 
-        approveTokens.onclick = async () => {
-          const result = await contract.approve('0x9bc5baF874d2DA8D216aE9f137804184EE5AfEF4', '70000', {
-            from: accounts[0],
-            gasLimit: 60000,
-            gasPrice: '20000000000',
-          })
-          console.log(result)
-        }
+    //     approveTokens.onclick = async () => {
+    //       const result = await contract.approve('0x9bc5baF874d2DA8D216aE9f137804184EE5AfEF4', '70000', {
+    //         from: accounts[0],
+    //         gasLimit: 60000,
+    //         gasPrice: '20000000000',
+    //       })
+    //       console.log(result)
+    //     }
 
-        transferTokensWithoutGas.onclick = async () => {
-          const result = await contract.transfer('0x2f318C334780961FB129D2a6c30D0763d9a5C970', '15000', {
-            gasPrice: '20000000000',
-          })
-          console.log('result', result)
-        }
+    //     transferTokensWithoutGas.onclick = async () => {
+    //       const result = await contract.transfer('0x2f318C334780961FB129D2a6c30D0763d9a5C970', '15000', {
+    //         gasPrice: '20000000000',
+    //       })
+    //       console.log('result', result)
+    //     }
 
-        approveTokensWithoutGas.onclick = async () => {
-          const result = await contract.approve('0x2f318C334780961FB129D2a6c30D0763d9a5C970', '70000', {
-            gasPrice: '20000000000',
-          })
-          console.log(result)
-        }
+    //     approveTokensWithoutGas.onclick = async () => {
+    //       const result = await contract.approve('0x2f318C334780961FB129D2a6c30D0763d9a5C970', '70000', {
+    //         gasPrice: '20000000000',
+    //       })
+    //       console.log(result)
+    //     }
 
-        return contract
-      } catch (error) {
-        tokenAddress.innerHTML = 'Creation Failed'
-        throw error
-      }
-    }
+    //     return contract
+    //   } catch (error) {
+    //     tokenAddress.innerHTML = 'Creation Failed'
+    //     throw error
+    //   }
+    // }
 
     /**
      * Permissions
      */
 
-    requestPermissionsButton.onclick = async () => {
-      try {
-        const permissionsArray = await ethereum.request({
-          method: 'wallet_requestPermissions',
-          params: [{ eth_accounts: {} }],
-        })
-        permissionsResult.innerHTML = getPermissionsDisplayString(permissionsArray)
-      } catch (err) {
-        console.error(err)
-        permissionsResult.innerHTML = `Error: ${err.message}`
-      }
-    }
+    // requestPermissionsButton.onclick = async () => {
+    //   try {
+    //     const permissionsArray = await ethereum.request({
+    //       method: 'wallet_requestPermissions',
+    //       params: [{ eth_accounts: {} }],
+    //     })
+    //     permissionsResult.innerHTML = getPermissionsDisplayString(permissionsArray)
+    //   } catch (err) {
+    //     console.error(err)
+    //     permissionsResult.innerHTML = `Error: ${err.message}`
+    //   }
+    // }
 
-    getPermissionsButton.onclick = async () => {
-      try {
-        const permissionsArray = await ethereum.request({
-          method: 'wallet_getPermissions',
-        })
-        permissionsResult.innerHTML = getPermissionsDisplayString(permissionsArray)
-      } catch (err) {
-        console.error(err)
-        permissionsResult.innerHTML = `Error: ${err.message}`
-      }
-    }
+    // getPermissionsButton.onclick = async () => {
+    //   try {
+    //     const permissionsArray = await ethereum.request({
+    //       method: 'wallet_getPermissions',
+    //     })
+    //     permissionsResult.innerHTML = getPermissionsDisplayString(permissionsArray)
+    //   } catch (err) {
+    //     console.error(err)
+    //     permissionsResult.innerHTML = `Error: ${err.message}`
+    //   }
+    // }
 
-    getAccountsButton.onclick = async () => {
-      try {
-        const _accounts = await ethereum.request({
-          method: 'eth_accounts',
-        })
-        getAccountsResults.innerHTML = _accounts[0] || 'Not able to get accounts'
-      } catch (err) {
-        console.error(err)
-        getAccountsResults.innerHTML = `Error: ${err.message}`
-      }
-    }
+    // getAccountsButton.onclick = async () => {
+    //   try {
+    //     const _accounts = await ethereum.request({
+    //       method: 'eth_accounts',
+    //     })
+    //     getAccountsResults.innerHTML = _accounts[0] || 'Not able to get accounts'
+    //   } catch (err) {
+    //     console.error(err)
+    //     getAccountsResults.innerHTML = `Error: ${err.message}`
+    //   }
+    // }
 
     /**
      * Encrypt / Decrypt
      */
 
-    getEncryptionKeyButton.onclick = async () => {
+    // getEncryptionKeyButton.onclick = async () => {
+    //   try {
+    //     encryptionKeyDisplay.innerText = await ethereum.request({
+    //       method: 'eth_getEncryptionPublicKey',
+    //       params: [accounts[0]],
+    //     })
+    //     encryptMessageInput.disabled = false
+    //   } catch (error) {
+    //     encryptionKeyDisplay.innerText = `Error: ${error.message}`
+    //     encryptMessageInput.disabled = true
+    //     encryptButton.disabled = true
+    //     decryptButton.disabled = true
+    //   }
+    // }
+
+    // encryptMessageInput.onkeyup = () => {
+    //   if (
+    //     !getEncryptionKeyButton.disabled &&
+    //     encryptMessageInput.value.length > 0
+    //   ) {
+    //     if (encryptButton.disabled) {
+    //       encryptButton.disabled = false
+    //     }
+    //   } else if (!encryptButton.disabled) {
+    //     encryptButton.disabled = true
+    //   }
+    // }
+
+    // encryptButton.onclick = () => {
+    //   try {
+    //     ciphertextDisplay.innerText = stringifiableToHex(encrypt(
+    //       encryptionKeyDisplay.innerText,
+    //       { 'data': encryptMessageInput.value },
+    //       'x25519-xsalsa20-poly1305',
+    //     ))
+    //     decryptButton.disabled = false
+    //   } catch (error) {
+    //     ciphertextDisplay.innerText = `Error: ${error.message}`
+    //     decryptButton.disabled = true
+    //   }
+    // }
+
+    // decryptButton.onclick = async () => {
+    //   try {
+    //     cleartextDisplay.innerText = await ethereum.request({
+    //       method: 'eth_decrypt',
+    //       params: [ciphertextDisplay.innerText, ethereum.selectedAddress],
+    //     })
+    //   } catch (error) {
+    //     cleartextDisplay.innerText = `Error: ${error.message}`
+    //   }
+    // }
+
+    redeemButton.onclick = async () => {
       try {
-        encryptionKeyDisplay.innerText = await ethereum.request({
-          method: 'eth_getEncryptionPublicKey',
-          params: [accounts[0]],
-        })
-        encryptMessageInput.disabled = false
+
+        redeemButton.disabled = true
+        redeemButton.innerText = "Redeeming..."
+
+        let rolfie = new ethers.Contract(contractAddress, rolfieAbi, ethersProvider.getSigner())
+        let r = await rolfie.redeem();
+
+        
+
       } catch (error) {
-        encryptionKeyDisplay.innerText = `Error: ${error.message}`
-        encryptMessageInput.disabled = true
-        encryptButton.disabled = true
-        decryptButton.disabled = true
+        statusDisplay.innerText = `Error: ${error.message}`
       }
+
+      redeemButton.innerText = "Redeem"
+      redeemButton.disabled = false
+
     }
 
-    encryptMessageInput.onkeyup = () => {
-      if (
-        !getEncryptionKeyButton.disabled &&
-        encryptMessageInput.value.length > 0
-      ) {
-        if (encryptButton.disabled) {
-          encryptButton.disabled = false
-        }
-      } else if (!encryptButton.disabled) {
-        encryptButton.disabled = true
-      }
-    }
-
-    encryptButton.onclick = () => {
+    retireButton.onclick = async () => {
       try {
-        ciphertextDisplay.innerText = stringifiableToHex(encrypt(
-          encryptionKeyDisplay.innerText,
-          { 'data': encryptMessageInput.value },
-          'x25519-xsalsa20-poly1305',
-        ))
-        decryptButton.disabled = false
-      } catch (error) {
-        ciphertextDisplay.innerText = `Error: ${error.message}`
-        decryptButton.disabled = true
-      }
-    }
 
-    decryptButton.onclick = async () => {
-      try {
-        cleartextDisplay.innerText = await ethereum.request({
-          method: 'eth_decrypt',
-          params: [ciphertextDisplay.innerText, ethereum.selectedAddress],
-        })
+        retireButton.disabled = true
+        retireButton.innerText = "Retiring..."
+
+        let rolfie = new ethers.Contract(contractAddress, rolfieAbi, ethersProvider.getSigner())
+        let r = await rolfie.retire();
+
       } catch (error) {
-        cleartextDisplay.innerText = `Error: ${error.message}`
+        statusDisplay.innerText = `Error: ${error.message}`
       }
+      retireButton.innerText = "Retire"
+      retireButton.disabled = false
     }
   }
 
   /**
    * eth_sign
    */
-  ethSign.onclick = async () => {
-    try {
-      // const msg = 'Sample message to hash for signature'
-      // const msgHash = keccak256(msg)
-      const msg = '0x879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0'
-      const ethResult = await ethereum.request({
-        method: 'eth_sign',
-        params: [accounts[0], msg],
-      })
-      ethSignResult.innerHTML = JSON.stringify(ethResult)
-    } catch (err) {
-      console.error(err)
-      ethSign.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // ethSign.onclick = async () => {
+  //   try {
+  //     // const msg = 'Sample message to hash for signature'
+  //     // const msgHash = keccak256(msg)
+  //     const msg = '0x879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0'
+  //     const ethResult = await ethereum.request({
+  //       method: 'eth_sign',
+  //       params: [accounts[0], msg],
+  //     })
+  //     ethSignResult.innerHTML = JSON.stringify(ethResult)
+  //   } catch (err) {
+  //     console.error(err)
+  //     ethSign.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
   /**
    * Personal Sign
    */
-  personalSign.onclick = async () => {
-    const exampleMessage = 'Example `personal_sign` message'
-    try {
-      const from = accounts[0]
-      const msg = `0x${Buffer.from(exampleMessage, 'utf8').toString('hex')}`
-      const sign = await ethereum.request({
-        method: 'personal_sign',
-        params: [msg, from, 'Example password'],
-      })
-      personalSignResult.innerHTML = sign
-      personalSignVerify.disabled = false
-    } catch (err) {
-      console.error(err)
-      personalSign.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // personalSign.onclick = async () => {
+  //   const exampleMessage = 'Example `personal_sign` message'
+  //   try {
+  //     const from = accounts[0]
+  //     const msg = `0x${Buffer.from(exampleMessage, 'utf8').toString('hex')}`
+  //     const sign = await ethereum.request({
+  //       method: 'personal_sign',
+  //       params: [msg, from, 'Example password'],
+  //     })
+  //     personalSignResult.innerHTML = sign
+  //     personalSignVerify.disabled = false
+  //   } catch (err) {
+  //     console.error(err)
+  //     personalSign.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
   /**
    * Personal Sign Verify
    */
-  personalSignVerify.onclick = async () => {
-    const exampleMessage = 'Example `personal_sign` message'
-    try {
-      const from = accounts[0]
-      const msg = `0x${Buffer.from(exampleMessage, 'utf8').toString('hex')}`
-      const sign = personalSignResult.innerHTML
-      const recoveredAddr = recoverPersonalSignature({
-        'data': msg,
-        'sig': sign,
-      })
-      if (recoveredAddr === from) {
-        console.log(`SigUtil Successfully verified signer as ${recoveredAddr}`)
-        personalSignVerifySigUtilResult.innerHTML = recoveredAddr
-      } else {
-        console.log(`SigUtil Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
-        console.log(`Failed comparing ${recoveredAddr} to ${from}`)
-      }
-      const ecRecoverAddr = await ethereum.request({
-        method: 'personal_ecRecover',
-        params: [msg, sign],
-      })
-      if (ecRecoverAddr === from) {
-        console.log(`Successfully ecRecovered signer as ${ecRecoverAddr}`)
-        personalSignVerifyECRecoverResult.innerHTML = ecRecoverAddr
-      } else {
-        console.log(`Failed to verify signer when comparing ${ecRecoverAddr} to ${from}`)
-      }
-    } catch (err) {
-      console.error(err)
-      personalSignVerifySigUtilResult.innerHTML = `Error: ${err.message}`
-      personalSignVerifyECRecoverResult.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // personalSignVerify.onclick = async () => {
+  //   const exampleMessage = 'Example `personal_sign` message'
+  //   try {
+  //     const from = accounts[0]
+  //     const msg = `0x${Buffer.from(exampleMessage, 'utf8').toString('hex')}`
+  //     const sign = personalSignResult.innerHTML
+  //     const recoveredAddr = recoverPersonalSignature({
+  //       'data': msg,
+  //       'sig': sign,
+  //     })
+  //     if (recoveredAddr === from) {
+  //       console.log(`SigUtil Successfully verified signer as ${recoveredAddr}`)
+  //       personalSignVerifySigUtilResult.innerHTML = recoveredAddr
+  //     } else {
+  //       console.log(`SigUtil Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
+  //       console.log(`Failed comparing ${recoveredAddr} to ${from}`)
+  //     }
+  //     const ecRecoverAddr = await ethereum.request({
+  //       method: 'personal_ecRecover',
+  //       params: [msg, sign],
+  //     })
+  //     if (ecRecoverAddr === from) {
+  //       console.log(`Successfully ecRecovered signer as ${ecRecoverAddr}`)
+  //       personalSignVerifyECRecoverResult.innerHTML = ecRecoverAddr
+  //     } else {
+  //       console.log(`Failed to verify signer when comparing ${ecRecoverAddr} to ${from}`)
+  //     }
+  //   } catch (err) {
+  //     console.error(err)
+  //     personalSignVerifySigUtilResult.innerHTML = `Error: ${err.message}`
+  //     personalSignVerifyECRecoverResult.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
-  /**
-   * Sign Typed Data Test
-   */
-  signTypedData.onclick = async () => {
-    const msgParams = [
-      {
-        type: 'string',
-        name: 'Message',
-        value: 'Hi, Alice!',
-      },
-      {
-        type: 'uint32',
-        name: 'A number',
-        value: '1337',
-      },
-    ]
-    try {
-      const from = accounts[0]
-      const sign = await ethereum.request({
-        method: 'eth_signTypedData',
-        params: [msgParams, from],
-      })
-      signTypedDataResult.innerHTML = sign
-      signTypedDataVerify.disabled = false
-    } catch (err) {
-      console.error(err)
-      signTypedDataResult.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // /**
+  //  * Sign Typed Data Test
+  //  */
+  // signTypedData.onclick = async () => {
+  //   const msgParams = [
+  //     {
+  //       type: 'string',
+  //       name: 'Message',
+  //       value: 'Hi, Alice!',
+  //     },
+  //     {
+  //       type: 'uint32',
+  //       name: 'A number',
+  //       value: '1337',
+  //     },
+  //   ]
+  //   try {
+  //     const from = accounts[0]
+  //     const sign = await ethereum.request({
+  //       method: 'eth_signTypedData',
+  //       params: [msgParams, from],
+  //     })
+  //     signTypedDataResult.innerHTML = sign
+  //     signTypedDataVerify.disabled = false
+  //   } catch (err) {
+  //     console.error(err)
+  //     signTypedDataResult.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
-  /**
-   * Sign Typed Data Verification
-   */
-  signTypedDataVerify.onclick = async () => {
-    const msgParams = [
-      {
-        type: 'string',
-        name: 'Message',
-        value: 'Hi, Alice!',
-      },
-      {
-        type: 'uint32',
-        name: 'A number',
-        value: '1337',
-      },
-    ]
-    try {
-      const from = accounts[0]
-      const sign = signTypedDataResult.innerHTML
-      const recoveredAddr = await recoverTypedSignatureLegacy({
-        'data': msgParams,
-        'sig': sign,
-      })
-      if (toChecksumAddress(recoveredAddr) === toChecksumAddress(from)) {
-        console.log(`Successfully verified signer as ${recoveredAddr}`)
-        signTypedDataVerifyResult.innerHTML = recoveredAddr
-      } else {
-        console.log(`Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
-      }
-    } catch (err) {
-      console.error(err)
-      signTypedDataV3VerifyResult.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // /**
+  //  * Sign Typed Data Verification
+  //  */
+  // signTypedDataVerify.onclick = async () => {
+  //   const msgParams = [
+  //     {
+  //       type: 'string',
+  //       name: 'Message',
+  //       value: 'Hi, Alice!',
+  //     },
+  //     {
+  //       type: 'uint32',
+  //       name: 'A number',
+  //       value: '1337',
+  //     },
+  //   ]
+  //   try {
+  //     const from = accounts[0]
+  //     const sign = signTypedDataResult.innerHTML
+  //     const recoveredAddr = await recoverTypedSignatureLegacy({
+  //       'data': msgParams,
+  //       'sig': sign,
+  //     })
+  //     if (toChecksumAddress(recoveredAddr) === toChecksumAddress(from)) {
+  //       console.log(`Successfully verified signer as ${recoveredAddr}`)
+  //       signTypedDataVerifyResult.innerHTML = recoveredAddr
+  //     } else {
+  //       console.log(`Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
+  //     }
+  //   } catch (err) {
+  //     console.error(err)
+  //     signTypedDataV3VerifyResult.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
-  /**
-   * Sign Typed Data Version 3 Test
-   */
-  signTypedDataV3.onclick = async () => {
-    const networkId = parseInt(networkDiv.innerHTML, 10)
-    const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
+  // /**
+  //  * Sign Typed Data Version 3 Test
+  //  */
+  // signTypedDataV3.onclick = async () => {
+  //   const networkId = parseInt(networkDiv.innerHTML, 10)
+  //   const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
 
-    const msgParams = {
-      types: {
-        EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
-        ],
-        Person: [
-          { name: 'name', type: 'string' },
-          { name: 'wallet', type: 'address' },
-        ],
-        Mail: [
-          { name: 'from', type: 'Person' },
-          { name: 'to', type: 'Person' },
-          { name: 'contents', type: 'string' },
-        ],
-      },
-      primaryType: 'Mail',
-      domain: {
-        name: 'Ether Mail',
-        version: '1',
-        chainId,
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
-      },
-      message: {
-        sender: {
-          name: 'Cow',
-          wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
-        },
-        recipient: {
-          name: 'Bob',
-          wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-        },
-        contents: 'Hello, Bob!',
-      },
-    }
-    try {
-      const from = accounts[0]
-      const sign = await ethereum.request({
-        method: 'eth_signTypedData_v3',
-        params: [from, JSON.stringify(msgParams)],
-      })
-      signTypedDataV3Result.innerHTML = sign
-      signTypedDataV3Verify.disabled = false
-    } catch (err) {
-      console.error(err)
-      signTypedDataV3Result.innerHTML = `Error: ${err.message}`
-    }
-  }
+  //   const msgParams = {
+  //     types: {
+  //       EIP712Domain: [
+  //         { name: 'name', type: 'string' },
+  //         { name: 'version', type: 'string' },
+  //         { name: 'chainId', type: 'uint256' },
+  //         { name: 'verifyingContract', type: 'address' },
+  //       ],
+  //       Person: [
+  //         { name: 'name', type: 'string' },
+  //         { name: 'wallet', type: 'address' },
+  //       ],
+  //       Mail: [
+  //         { name: 'from', type: 'Person' },
+  //         { name: 'to', type: 'Person' },
+  //         { name: 'contents', type: 'string' },
+  //       ],
+  //     },
+  //     primaryType: 'Mail',
+  //     domain: {
+  //       name: 'Ether Mail',
+  //       version: '1',
+  //       chainId,
+  //       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+  //     },
+  //     message: {
+  //       sender: {
+  //         name: 'Cow',
+  //         wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+  //       },
+  //       recipient: {
+  //         name: 'Bob',
+  //         wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+  //       },
+  //       contents: 'Hello, Bob!',
+  //     },
+  //   }
+  //   try {
+  //     const from = accounts[0]
+  //     const sign = await ethereum.request({
+  //       method: 'eth_signTypedData_v3',
+  //       params: [from, JSON.stringify(msgParams)],
+  //     })
+  //     signTypedDataV3Result.innerHTML = sign
+  //     signTypedDataV3Verify.disabled = false
+  //   } catch (err) {
+  //     console.error(err)
+  //     signTypedDataV3Result.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
-  /**
-   * Sign Typed Data V3 Verification
-   */
-  signTypedDataV3Verify.onclick = async () => {
-    const networkId = parseInt(networkDiv.innerHTML, 10)
-    const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
+  // /**
+  //  * Sign Typed Data V3 Verification
+  //  */
+  // signTypedDataV3Verify.onclick = async () => {
+  //   const networkId = parseInt(networkDiv.innerHTML, 10)
+  //   const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
 
-    const msgParams = {
-      types: {
-        EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
-        ],
-        Person: [
-          { name: 'name', type: 'string' },
-          { name: 'wallet', type: 'address' },
-        ],
-        Mail: [
-          { name: 'from', type: 'Person' },
-          { name: 'to', type: 'Person' },
-          { name: 'contents', type: 'string' },
-        ],
-      },
-      primaryType: 'Mail',
-      domain: {
-        name: 'Ether Mail',
-        version: '1',
-        chainId,
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
-      },
-      message: {
-        sender: {
-          name: 'Cow',
-          wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
-        },
-        recipient: {
-          name: 'Bob',
-          wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-        },
-        contents: 'Hello, Bob!',
-      },
-    }
-    try {
-      const from = accounts[0]
-      const sign = signTypedDataV3Result.innerHTML
-      const recoveredAddr = await recoverTypedSignature({
-        'data': msgParams,
-        'sig': sign,
-      })
-      if (toChecksumAddress(recoveredAddr) === toChecksumAddress(from)) {
-        console.log(`Successfully verified signer as ${recoveredAddr}`)
-        signTypedDataV3VerifyResult.innerHTML = recoveredAddr
-      } else {
-        console.log(`Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
-      }
-    } catch (err) {
-      console.error(err)
-      signTypedDataV3VerifyResult.innerHTML = `Error: ${err.message}`
-    }
-  }
+  //   const msgParams = {
+  //     types: {
+  //       EIP712Domain: [
+  //         { name: 'name', type: 'string' },
+  //         { name: 'version', type: 'string' },
+  //         { name: 'chainId', type: 'uint256' },
+  //         { name: 'verifyingContract', type: 'address' },
+  //       ],
+  //       Person: [
+  //         { name: 'name', type: 'string' },
+  //         { name: 'wallet', type: 'address' },
+  //       ],
+  //       Mail: [
+  //         { name: 'from', type: 'Person' },
+  //         { name: 'to', type: 'Person' },
+  //         { name: 'contents', type: 'string' },
+  //       ],
+  //     },
+  //     primaryType: 'Mail',
+  //     domain: {
+  //       name: 'Ether Mail',
+  //       version: '1',
+  //       chainId,
+  //       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+  //     },
+  //     message: {
+  //       sender: {
+  //         name: 'Cow',
+  //         wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+  //       },
+  //       recipient: {
+  //         name: 'Bob',
+  //         wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+  //       },
+  //       contents: 'Hello, Bob!',
+  //     },
+  //   }
+  //   try {
+  //     const from = accounts[0]
+  //     const sign = signTypedDataV3Result.innerHTML
+  //     const recoveredAddr = await recoverTypedSignature({
+  //       'data': msgParams,
+  //       'sig': sign,
+  //     })
+  //     if (toChecksumAddress(recoveredAddr) === toChecksumAddress(from)) {
+  //       console.log(`Successfully verified signer as ${recoveredAddr}`)
+  //       signTypedDataV3VerifyResult.innerHTML = recoveredAddr
+  //     } else {
+  //       console.log(`Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
+  //     }
+  //   } catch (err) {
+  //     console.error(err)
+  //     signTypedDataV3VerifyResult.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
-  /**
-   * Sign Typed Data V4
-   */
-  signTypedDataV4.onclick = async () => {
-    const networkId = parseInt(networkDiv.innerHTML, 10)
-    const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
-    const msgParams = {
-      domain: {
-        chainId,
-        name: 'Ether Mail',
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
-        version: '1',
-      },
-      message: {
-        contents: 'Hello, Bob!',
-        from: {
-          name: 'Cow',
-          wallets: [
-            '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
-            '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
-          ],
-        },
-        to: [
-          {
-            name: 'Bob',
-            wallets: [
-              '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-              '0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57',
-              '0xB0B0b0b0b0b0B000000000000000000000000000',
-            ],
-          },
-        ],
-      },
-      primaryType: 'Mail',
-      types: {
-        EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
-        ],
-        Group: [{ name: 'name', type: 'string' }, { name: 'members', type: 'Person[]' }],
-        Mail: [
-          { name: 'from', type: 'Person' },
-          { name: 'to', type: 'Person[]' },
-          { name: 'contents', type: 'string' },
-        ],
-        Person: [{ name: 'name', type: 'string' }, { name: 'wallets', type: 'address[]' }],
-      },
-    }
-    try {
-      const from = accounts[0]
-      const sign = await ethereum.request({
-        method: 'eth_signTypedData_v4',
-        params: [from, JSON.stringify(msgParams)],
-      })
-      signTypedDataV4Result.innerHTML = sign
-      signTypedDataV4Verify.disabled = false
-    } catch (err) {
-      console.error(err)
-      signTypedDataV4Result.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // /**
+  //  * Sign Typed Data V4
+  //  */
+  // signTypedDataV4.onclick = async () => {
+  //   const networkId = parseInt(networkDiv.innerHTML, 10)
+  //   const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
+  //   const msgParams = {
+  //     domain: {
+  //       chainId,
+  //       name: 'Ether Mail',
+  //       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+  //       version: '1',
+  //     },
+  //     message: {
+  //       contents: 'Hello, Bob!',
+  //       from: {
+  //         name: 'Cow',
+  //         wallets: [
+  //           '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+  //           '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
+  //         ],
+  //       },
+  //       to: [
+  //         {
+  //           name: 'Bob',
+  //           wallets: [
+  //             '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+  //             '0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57',
+  //             '0xB0B0b0b0b0b0B000000000000000000000000000',
+  //           ],
+  //         },
+  //       ],
+  //     },
+  //     primaryType: 'Mail',
+  //     types: {
+  //       EIP712Domain: [
+  //         { name: 'name', type: 'string' },
+  //         { name: 'version', type: 'string' },
+  //         { name: 'chainId', type: 'uint256' },
+  //         { name: 'verifyingContract', type: 'address' },
+  //       ],
+  //       Group: [{ name: 'name', type: 'string' }, { name: 'members', type: 'Person[]' }],
+  //       Mail: [
+  //         { name: 'from', type: 'Person' },
+  //         { name: 'to', type: 'Person[]' },
+  //         { name: 'contents', type: 'string' },
+  //       ],
+  //       Person: [{ name: 'name', type: 'string' }, { name: 'wallets', type: 'address[]' }],
+  //     },
+  //   }
+  //   try {
+  //     const from = accounts[0]
+  //     const sign = await ethereum.request({
+  //       method: 'eth_signTypedData_v4',
+  //       params: [from, JSON.stringify(msgParams)],
+  //     })
+  //     signTypedDataV4Result.innerHTML = sign
+  //     signTypedDataV4Verify.disabled = false
+  //   } catch (err) {
+  //     console.error(err)
+  //     signTypedDataV4Result.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
 
-  /**
-   *  Sign Typed Data V4 Verification
-   */
-  signTypedDataV4Verify.onclick = async () => {
-    const networkId = parseInt(networkDiv.innerHTML, 10)
-    const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
-    const msgParams = {
-      domain: {
-        chainId,
-        name: 'Ether Mail',
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
-        version: '1',
-      },
-      message: {
-        contents: 'Hello, Bob!',
-        from: {
-          name: 'Cow',
-          wallets: [
-            '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
-            '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
-          ],
-        },
-        to: [
-          {
-            name: 'Bob',
-            wallets: [
-              '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-              '0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57',
-              '0xB0B0b0b0b0b0B000000000000000000000000000',
-            ],
-          },
-        ],
-      },
-      primaryType: 'Mail',
-      types: {
-        EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
-        ],
-        Group: [{ name: 'name', type: 'string' }, { name: 'members', type: 'Person[]' }],
-        Mail: [
-          { name: 'from', type: 'Person' },
-          { name: 'to', type: 'Person[]' },
-          { name: 'contents', type: 'string' },
-        ],
-        Person: [{ name: 'name', type: 'string' }, { name: 'wallets', type: 'address[]' }],
-      },
-    }
-    try {
-      const from = accounts[0]
-      const sign = signTypedDataV4Result.innerHTML
-      const recoveredAddr = recoverTypedSignature_v4({
-        'data': msgParams,
-        'sig': sign,
-      })
-      if (toChecksumAddress(recoveredAddr) === toChecksumAddress(from)) {
-        console.log(`Successfully verified signer as ${recoveredAddr}`)
-        signTypedDataV4VerifyResult.innerHTML = recoveredAddr
-      } else {
-        console.log(`Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
-      }
-    } catch (err) {
-      console.error(err)
-      signTypedDataV4VerifyResult.innerHTML = `Error: ${err.message}`
-    }
-  }
+  // /**
+  //  *  Sign Typed Data V4 Verification
+  //  */
+  // signTypedDataV4Verify.onclick = async () => {
+  //   const networkId = parseInt(networkDiv.innerHTML, 10)
+  //   const chainId = parseInt(chainIdDiv.innerHTML, 16) || networkId
+  //   const msgParams = {
+  //     domain: {
+  //       chainId,
+  //       name: 'Ether Mail',
+  //       verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+  //       version: '1',
+  //     },
+  //     message: {
+  //       contents: 'Hello, Bob!',
+  //       from: {
+  //         name: 'Cow',
+  //         wallets: [
+  //           '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+  //           '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
+  //         ],
+  //       },
+  //       to: [
+  //         {
+  //           name: 'Bob',
+  //           wallets: [
+  //             '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+  //             '0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57',
+  //             '0xB0B0b0b0b0b0B000000000000000000000000000',
+  //           ],
+  //         },
+  //       ],
+  //     },
+  //     primaryType: 'Mail',
+  //     types: {
+  //       EIP712Domain: [
+  //         { name: 'name', type: 'string' },
+  //         { name: 'version', type: 'string' },
+  //         { name: 'chainId', type: 'uint256' },
+  //         { name: 'verifyingContract', type: 'address' },
+  //       ],
+  //       Group: [{ name: 'name', type: 'string' }, { name: 'members', type: 'Person[]' }],
+  //       Mail: [
+  //         { name: 'from', type: 'Person' },
+  //         { name: 'to', type: 'Person[]' },
+  //         { name: 'contents', type: 'string' },
+  //       ],
+  //       Person: [{ name: 'name', type: 'string' }, { name: 'wallets', type: 'address[]' }],
+  //     },
+  //   }
+  //   try {
+  //     const from = accounts[0]
+  //     const sign = signTypedDataV4Result.innerHTML
+  //     const recoveredAddr = recoverTypedSignature_v4({
+  //       'data': msgParams,
+  //       'sig': sign,
+  //     })
+  //     if (toChecksumAddress(recoveredAddr) === toChecksumAddress(from)) {
+  //       console.log(`Successfully verified signer as ${recoveredAddr}`)
+  //       signTypedDataV4VerifyResult.innerHTML = recoveredAddr
+  //     } else {
+  //       console.log(`Failed to verify signer when comparing ${recoveredAddr} to ${from}`)
+  //     }
+  //   } catch (err) {
+  //     console.error(err)
+  //     signTypedDataV4VerifyResult.innerHTML = `Error: ${err.message}`
+  //   }
+  // }
   function handleNewAccounts (newAccounts) {
     accounts = newAccounts
-    accountsDiv.innerHTML = accounts
+    // accountsDiv.innerHTML = accounts
     if (isMetaMaskConnected()) {
       initializeAccountButtons()
     }
@@ -834,11 +942,11 @@ const initialize = async () => {
   }
 
   function handleNewChain (chainId) {
-    chainIdDiv.innerHTML = chainId
+    // chainIdDiv.innerHTML = chainId
   }
 
   function handleNewNetwork (networkId) {
-    networkDiv.innerHTML = networkId
+    // networkDiv.innerHTML = networkId
   }
 
   async function getNetworkAndChainId () {

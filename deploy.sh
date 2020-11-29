@@ -64,7 +64,7 @@ function preprocess_and_publish {
   git init || abort "Failed to initialize git repository in website directory"
   git add -A . || abort "Failed to stage website files"
   git commit -m "update using ${SOURCE_BRANCH}/${shorthash}" || abort "Failed to commit website files"
-  git push -f git@github.com:MetaMask/test-dapp.git ${SOURCE_BRANCH}:${DEPLOY_BRANCH} || abort "Failed to push to ${GH_REMOTE}/${DEPLOY_BRANCH}"
+  git push -f git@github.com:rolfie-coin/rolfie-coin.github.io.git ${SOURCE_BRANCH}:${DEPLOY_BRANCH} || abort "Failed to push to ${GH_REMOTE}/${DEPLOY_BRANCH}"
   echo "Successfully pushed to ${GH_REMOTE}/${DEPLOY_BRANCH}"
 
   rm -rf .git || abort "Failed to delete .git folder in ${WEBSITE_DIR_PATH}"
@@ -124,3 +124,7 @@ function main {
 }
 
 main "$@"
+
+
+
+git subtree push --prefix dist origin gh-pages
